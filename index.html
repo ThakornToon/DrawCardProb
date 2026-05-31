@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>เครื่องคำนวณความน่าจะเป็น — Card Draw Probability Calculator</title>
+    <meta name="description"
+        content="คำนวณความน่าจะเป็นในการจั่วการ์ดที่ต้องการจากกองการ์ด ด้วย Multivariate Hypergeometric Distribution">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="bg-effects">
+        <div class="bg-orb bg-orb--1"></div>
+        <div class="bg-orb bg-orb--2"></div>
+        <div class="bg-orb bg-orb--3"></div>
+    </div>
+    <div class="app">
+        <header class="header">
+            <div class="header__icon">🃏</div>
+            <div class="header__text">
+                <h1>Card Draw Probability</h1>
+                <p class="header__subtitle">Multivariate Hypergeometric Distribution Calculator</p>
+            </div>
+            <button type="button" id="themeToggle" class="theme-toggle" title="สลับโหมดสว่าง/มืด">
+                <span class="theme-toggle__icon--light">🌙</span>
+                <span class="theme-toggle__icon--dark">☀️</span>
+            </button>
+        </header>
+        <main class="main">
+            <!-- ===== INPUT PANEL ===== -->
+            <section class="panel panel--input">
+                <div class="card card--deck">
+                    <div class="card__header">
+                        <span class="card__icon">⚙️</span>
+                        <h2>ตั้งค่ากองการ์ด</h2>
+                    </div>
+                    <div class="card__body">
+                        <div class="field">
+                            <label class="field__label" for="totalCards">จำนวนการ์ดทั้งหมดในกอง</label>
+                            <div class="field__input-wrap">
+                                <input type="number" id="totalCards" class="field__input" value="40" min="1" max="1000">
+                                <span class="field__unit">ใบ</span>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="field__label" for="drawCount">จำนวนการ์ดที่จั่ว</label>
+                            <div class="field__input-wrap">
+                                <input type="number" id="drawCount" class="field__input" value="5" min="1" max="1000">
+                                <span class="field__unit">ใบ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card--types">
+                    <div class="card__header">
+                        <span class="card__icon">🎴</span>
+                        <h2>ชนิดการ์ดที่ต้องการ</h2>
+                        <button type="button" id="addCardType" class="btn btn--accent btn--sm">
+                            <span class="btn__icon">+</span> เพิ่มชนิด
+                        </button>
+                    </div>
+                    <div class="card__body">
+                        <div id="cardTypesList" class="card-types-list">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="calculateBtn" class="btn btn--primary btn--lg btn--full">
+                    <span class="btn__icon">⚡</span> คำนวณความน่าจะเป็น
+                </button>
+            </section>
+            <!-- ===== OUTPUT PANEL ===== -->
+            <section class="panel panel--output">
+                <div class="card card--result">
+                    <div class="card__header">
+                        <span class="card__icon">📊</span>
+                        <h2>ผลลัพธ์</h2>
+                    </div>
+                    <div class="card__body">
+                        <div id="resultArea" class="result">
+                            <div class="result__placeholder">
+                                <span class="result__placeholder-icon">🎯</span>
+                                <p>กดปุ่ม "คำนวณ" เพื่อดูผลลัพธ์</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card--graph">
+                    <div class="card__header">
+                        <span class="card__icon">📈</span>
+                        <h2>กราฟ</h2>
+                    </div>
+                    <div class="card__body">
+                        <div class="graph-controls">
+                            <div class="field">
+                                <label class="field__label" for="xAxisVar">ตัวแปรแกน X</label>
+                                <select id="xAxisVar" class="field__select">
+                                    <option value="">— เลือกตัวแปร —</option>
+                                </select>
+                            </div>
+                            <div class="graph-controls__range">
+                                <div class="field">
+                                    <label class="field__label" for="xMin">ค่าเริ่มต้น</label>
+                                    <input type="number" id="xMin" class="field__input" min="0">
+                                </div>
+                                <div class="field">
+                                    <label class="field__label" for="xMax">ค่าสิ้นสุด</label>
+                                    <input type="number" id="xMax" class="field__input" min="0">
+                                </div>
+                            </div>
+                            <button type="button" id="generateGraph" class="btn btn--secondary btn--full">
+                                <span class="btn__icon">📈</span> สร้างกราฟ
+                            </button>
+                        </div>
+                        <div class="chart-container" id="chartContainer" style="display:none;">
+                            <canvas id="probChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="footer">
+            <p>คำนวณด้วย Multivariate Hypergeometric Distribution &middot; สูตร: P = Σ [∏ C(Kᵢ, xᵢ) · C(R, n−Σxᵢ)] /
+                C(N, n)</p>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
