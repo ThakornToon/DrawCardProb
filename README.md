@@ -1,141 +1,86 @@
-# 🃏 Card Draw Probability Calculator
+# Card Draw Probability Calculator
 
-**เครื่องคำนวณความน่าจะเป็นในการจั่วการ์ด**
+เครื่องคำนวณความน่าจะเป็นในการจั่วการ์ด — รองรับสองภาษา (ไทย / EN)
 
-A bilingual (Thai / English) web-based calculator for computing the probability of drawing specific card combinations from a deck, using the **Multivariate Hypergeometric Distribution**.
-
----
-
-## 🌐 Language / ภาษา
-
-The interface supports **Thai (ไทย)** and **English (EN)**.  
-Toggle the language using the **`EN` / `ไทย`** button in the top-right corner.  
-Your preference is saved automatically.
-
-รองรับภาษา **ไทย** และ **English** — กดปุ่ม **`EN` / `ไทย`** ที่มุมขวาบนเพื่อเปลี่ยนภาษา
+คำนวณโดยใช้ **Multivariate Hypergeometric Distribution** รองรับหลายชนิดการ์ดพร้อมกัน และเลือกเงื่อนไขแต่ละชนิดได้อิสระ
 
 ---
 
-## ✨ Features / ฟีเจอร์
+## การใช้งาน
 
-| Feature | รายละเอียด |
-|---|---|
-| 🌐 Bilingual UI (TH / EN) | อินเตอร์เฟซสองภาษา พร้อมสลับทันที |
-| ➕ Multiple card types | เพิ่มชนิดการ์ดได้ไม่จำกัด |
-| 🔢 Comparison operators | เลือกเงื่อนไข `<` `<=` `>=` `>` ต่อการ์ดแต่ละชนิด |
-| 📊 Probability graph | กราฟแบบโต้ตอบ เลือกตัวแปรแกน X ได้ |
-| 🌙 Dark / Light mode | สลับธีมสว่าง/มืด พร้อม OS auto-detect |
-| ⚡ Fast math engine | คำนวณด้วย log-space arithmetic รองรับ deck ขนาดใหญ่ |
-| 💾 Persistent settings | จำภาษาและธีมที่เลือกไว้ใน localStorage |
+### 1. ตั้งค่ากอง
+ใส่จำนวนการ์ดทั้งหมดในกอง และจำนวนที่จั่ว (เช่น 40 ใบ จั่ว 5 ใบ = opening hand)
 
----
+### 2. เพิ่มชนิดการ์ด
+กด **+ เพิ่มชนิด** แล้วกรอก:
+- ชื่อการ์ด
+- จำนวนในกอง
+- เงื่อนไข: ตัวดำเนินการ + เกณฑ์ (เช่น `≥ 1` = อยากได้อย่างน้อย 1 ใบ)
 
-## 🔢 Comparison Operators / ตัวดำเนินการเปรียบเทียบ
+### 3. คำนวณ
+กด **คำนวณความน่าจะเป็น** — ผลลัพธ์แสดง %, ทศนิยม, progress bar, และ odds ratio
 
-Each card type supports four operators, letting you precisely express your draw condition:
-
-| Operator | Meaning (EN) | ความหมาย (TH) | Example |
-|:---:|---|---|---|
-| `<` | Draw **fewer than** N cards of this type | จั่วการ์ดชนิดนี้ **น้อยกว่า** N ใบ | `< 2` → ได้ 0 หรือ 1 ใบ |
-| `<=` | Draw **at most** N cards of this type | จั่วการ์ดชนิดนี้ **ไม่เกิน** N ใบ | `<= 2` → ได้ 0, 1 หรือ 2 ใบ |
-| `>=` | Draw **at least** N cards of this type | จั่วการ์ดชนิดนี้ **อย่างน้อย** N ใบ | `>= 2` → ได้ 2 ใบขึ้นไป |
-| `>` | Draw **more than** N cards of this type | จั่วการ์ดชนิดนี้ **มากกว่า** N ใบ | `> 1` → ได้ 2 ใบขึ้นไป |
-
-> **Note:** All conditions across card types must be satisfied **simultaneously**.  
-> The graph updates to reflect whichever operator is currently selected.
-
-> **หมายเหตุ:** เงื่อนไขทุกชนิดการ์ดต้องเป็นจริงพร้อมกัน และกราฟจะสะท้อนตัวดำเนินการที่เลือกอยู่เสมอ
+### 4. กราฟ
+เลือกตัวแปรแกน X กำหนดช่วง แล้วกด **สร้างกราฟ** เพื่อดูว่าความน่าจะเป็นเปลี่ยนอย่างไรเมื่อตัวแปรนั้นเปลี่ยน
 
 ---
 
-## 📐 Math Background / หลักการทางคณิตศาสตร์
+## ตัวดำเนินการเปรียบเทียบ
 
-The calculator uses the **Multivariate Hypergeometric Distribution**:
+แต่ละชนิดการ์ดเลือกได้ 5 แบบ:
+
+| ตัวดำเนินการ | ความหมาย | ตัวอย่าง |
+|:---:|---|---|
+| `<` | น้อยกว่า N ใบ | `< 2` → ได้ 0 หรือ 1 ใบ |
+| `≤` | ไม่เกิน N ใบ | `≤ 2` → ได้ 0–2 ใบ |
+| `=` | เท่ากับ N ใบพอดี | `= 2` → ได้ 2 ใบเท่านั้น |
+| `≥` | อย่างน้อย N ใบ | `≥ 2` → ได้ 2 ใบขึ้นไป |
+| `>` | มากกว่า N ใบ | `> 1` → ได้ 2 ใบขึ้นไป |
+
+เงื่อนไขทุกชนิดต้องเป็นจริง**พร้อมกัน** ถึงจะนับเป็น success
+
+---
+
+## หลักคณิตศาสตร์
 
 $$P = \frac{\sum \prod_{i} \binom{K_i}{x_i} \cdot \binom{R}{n - \sum x_i}}{\binom{N}{n}}$$
 
-**Variables:**
+- **N** — การ์ดทั้งหมดในกอง
+- **n** — จำนวนที่จั่ว
+- **Kᵢ** — จำนวนการ์ดชนิด i ในกอง
+- **xᵢ** — จำนวนที่จั่วได้ (กำหนดโดยตัวดำเนินการและเกณฑ์)
+- **R** — การ์ดที่เหลือที่ไม่ได้ระบุชนิด
 
-| Symbol | Description |
-|:---:|---|
-| `N` | Total cards in the deck |
-| `n` | Number of cards drawn |
-| `Kᵢ` | Number of cards of type `i` in the deck |
-| `xᵢ` | Number of cards of type `i` drawn (determined by operator & threshold) |
-| `R` | Remaining cards not in any specified type |
-
-To handle large factorials without overflow, all computations use **log-space arithmetic** (summing log-factorials instead of multiplying large integers).
+คำนวณด้วย log-space arithmetic เพื่อหลีกเลี่ยง overflow กับ deck ขนาดใหญ่
 
 ---
 
-## 🚀 Usage / วิธีใช้งาน
+## ฟีเจอร์อื่นๆ
 
-### 1. Set up the deck / ตั้งค่ากอง
-- Enter the **total number of cards** in your deck (e.g. 40)
-- Enter how many cards you will **draw** (e.g. 5 = opening hand)
-
-### 2. Add card types / เพิ่มชนิดการ์ด
-- Click **"+ เพิ่มชนิด"** / **"+ Add Type"**
-- For each type, specify:
-  - **Name** — a label for the card group
-  - **In Deck** — how many copies are in the deck
-  - **Operator + Threshold** — the draw condition (e.g. `>= 1` means "at least 1")
-
-### 3. Calculate / คำนวณ
-- Click **"คำนวณความน่าจะเป็น"** / **"Calculate Probability"**
-- Results show: probability %, decimal, progress bar, odds ratio, and full condition summary
-
-### 4. Graph / กราฟ
-- Select an **X-axis variable** (e.g. "Cards to Draw")
-- Set the range and click **"สร้างกราฟ"** / **"Generate Graph"**
-- The graph reflects the current operators and thresholds of all card types
+- **Dark / Light mode** — สลับธีมได้ หรือให้ตามระบบอัตโนมัติ
+- **สองภาษา** — กดปุ่ม `EN` / `ไทย` ที่มุมขวาบนเพื่อสลับ ระบบจำค่าที่เลือกไว้
+- **ไม่ต้อง build** — เปิด `index.html` ใน browser ได้เลย ต้องการ internet สำหรับ Google Fonts และ Chart.js CDN
 
 ---
 
-## 📁 File Structure / โครงสร้างไฟล์
+## โครงสร้างไฟล์
 
 ```
-├── index.html   — Main HTML structure with data-i18n attributes
-├── app.js       — All logic: math engine, i18n, rendering, chart
-├── style.css    — Design tokens, layout, components, dark/light themes
-└── README.md    — This file
+├── index.html   — โครงสร้าง HTML
+├── app.js       — logic ทั้งหมด: math, i18n, UI, chart
+├── style.css    — design tokens, layout, dark/light theme
+└── README.md    — ไฟล์นี้
 ```
 
-### Key sections in `app.js`
+**ส่วนหลักใน `app.js`**
 
-| Section | Description |
+| ฟังก์ชัน | หน้าที่ |
 |---|---|
-| `I18N` | All UI strings for Thai and English |
-| `tr(key, ...args)` | Translation helper function |
-| `calculateProbability()` | Core math with per-type operator support |
-| `renderCardTypes()` | Dynamic card type form with operator selector |
-| `validate()` | Input validation with operator-aware rules |
-| `generateGraph()` | Sweeps a variable and plots probability curve |
-| `renderChart()` | Chart.js integration with theme-aware colors |
-| `applyLanguage()` | Switches all UI text to the target language |
+| `calculateProbability()` | คำนวณหลัก รองรับ operator ทั้ง 5 แบบ |
+| `renderCardTypes()` | render form การ์ดแต่ละชนิดพร้อม operator selector |
+| `validate()` | ตรวจสอบ input ก่อนคำนวณ |
+| `generateGraph()` | sweep ตัวแปรและ plot กราฟ |
+| `applyLanguage()` | สลับภาษา UI ทั้งหมด |
+| `I18N` | string ทุกตัวสำหรับ TH และ EN |
 
 ---
-
-## 🌙 Themes / ธีม
-
-| Mode | Detection |
-|---|---|
-| **Auto** | Follows OS `prefers-color-scheme` |
-| **Light** | Forced via toggle, saved to `localStorage` |
-| **Dark** | Forced via toggle, saved to `localStorage` |
-
----
-
-## ⚙️ Requirements / ความต้องการของระบบ
-
-- Any modern browser (Chrome, Firefox, Safari, Edge)
-- Internet connection (for Google Fonts + Chart.js CDN)
-- **No build step required** — open `index.html` directly
-
-ไม่ต้องติดตั้งอะไรเพิ่มเติม เปิดไฟล์ `index.html` ผ่าน browser ได้เลย
-
----
-
-## 📄 License
-
-Free to use and modify for personal and educational purposes.
