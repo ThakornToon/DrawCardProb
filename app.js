@@ -58,8 +58,8 @@ const I18N = {
             'การ์ด I', 'การ์ด J', 'การ์ด K', 'การ์ด L',
         ],
         defaultNewCardPrefix: 'การ์ด',
-        opLabels: { '>=': 'อย่างน้อย', '>': 'มากกว่า', '<=': 'อย่างมาก', '<': 'น้อยกว่า' },
-        opSymbols: { '>=': '≥', '>': '>', '<=': '≤', '<': '<' },
+        opLabels: { '>=': 'อย่างน้อย', '>': 'มากกว่า', '<=': 'อย่างมาก', '<': 'น้อยกว่า', '=': 'เท่ากับ' },
+        opSymbols: { '>=': '≥', '>': '>', '<=': '≤', '<': '<', '=': '=' },
         footer: 'คำนวณด้วย Multivariate Hypergeometric Distribution \u00b7 สูตร: P = Σ [∏ C(Kᵢ, xᵢ) · C(R, n−Σxᵢ)] / C(N, n)',
         // Errors
         errTotalCards: 'จำนวนการ์ดทั้งหมดต้องมากกว่า 0',
@@ -73,6 +73,8 @@ const I18N = {
             `ต้องการ "${name}" ≥ ${min} ใบ แต่มีในกองเพียง ${count} ใบ`,
         errGtThreshold: (name, min, count) =>
             `ต้องการ "${name}" > ${min} ใบ แต่มีในกองเพียง ${count} ใบ`,
+        errEqThreshold: (name, val, count) =>
+            `ต้องการ "${name}" = ${val} ใบ แต่มีในกองเพียง ${count} ใบ`,
         errLtThresholdZero: (name) =>
             `เกณฑ์ "<" ของ "${name}" ต้องมีค่าอย่างน้อย 1`,
         errSumMin: (sumMin, draw) =>
@@ -134,8 +136,8 @@ const I18N = {
             'Card I', 'Card J', 'Card K', 'Card L',
         ],
         defaultNewCardPrefix: 'Card',
-        opLabels: { '>=': 'At least', '>': 'More than', '<=': 'At most', '<': 'Less than' },
-        opSymbols: { '>=': '≥', '>': '>', '<=': '≤', '<': '<' },
+        opLabels: { '>=': 'At least', '>': 'More than', '<=': 'At most', '<': 'Less than', '=': 'Exactly' },
+        opSymbols: { '>=': '≥', '>': '>', '<=': '≤', '<': '<', '=': '=' },
         footer: 'Powered by Multivariate Hypergeometric Distribution \u00b7 Formula: P = Σ [∏ C(Kᵢ, xᵢ) · C(R, n−Σxᵢ)] / C(N, n)',
         // Errors
         errTotalCards: 'Total cards must be greater than 0',
@@ -149,6 +151,8 @@ const I18N = {
             `"${name}" requires ≥ ${min} but only ${count} are in deck`,
         errGtThreshold: (name, min, count) =>
             `"${name}" requires > ${min} but only ${count} are in deck`,
+        errEqThreshold: (name, val, count) =>
+            `"${name}" requires exactly ${val} but only ${count} are in deck`,
         errLtThresholdZero: (name) =>
             `"<" threshold for "${name}" must be at least 1`,
         errSumMin: (sumMin, draw) =>
@@ -220,6 +224,7 @@ function calculateProbability(totalCards, drawCount, cardTypes) {
             case '>':  return [minDesired + 1,     maxPossible];
             case '<=': return [0,                   Math.min(minDesired, maxPossible)];
             case '<':  return [0,                   Math.min(minDesired - 1, maxPossible)];
+            case '=':  return [minDesired,          minDesired <= maxPossible ? minDesired : -1];
             default:   return [minDesired,         maxPossible];
         }
     }
@@ -438,6 +443,7 @@ function renderCardTypes() {
                         <div class="operator-group" data-id="${type.id}">
                             <button type="button" class="op-btn${op === '<'  ? ' op-btn--active' : ''}" data-op="<">&lt;</button>
                             <button type="button" class="op-btn${op === '<=' ? ' op-btn--active' : ''}" data-op="<=">&le;</button>
+                            <button type="button" class="op-btn${op === '='  ? ' op-btn--active' : ''}" data-op="=">=</button>
                             <button type="button" class="op-btn${op === '>=' ? ' op-btn--active' : ''}" data-op=">=">&ge;</button>
                             <button type="button" class="op-btn${op === '>'  ? ' op-btn--active' : ''}" data-op=">">&gt;</button>
                         </div>
@@ -543,14 +549,17 @@ function validate() {
             return { valid: false, error: tr('errGteThreshold', type.name, type.minDesired, type.count) };
         if (type.operator === '>' && type.minDesired >= type.count)
             return { valid: false, error: tr('errGtThreshold', type.name, type.minDesired, type.count) };
+        if (type.operator === '=' && type.minDesired > type.count)
+            return { valid: false, error: tr('errEqThreshold', type.name, type.minDesired, type.count) };
         if (type.operator === '<' && type.minDesired < 1)
             return { valid: false, error: tr('errLtThresholdZero', type.name) };
     }
 
-    // Effective minimum draw requirement (only >= and > impose a minimum)
+    // Effective minimum draw requirement (only >=, >, and = impose a minimum)
     const sumMin = cardTypes.reduce((s, t) => {
         if (t.operator === '>=') return s + t.minDesired;
         if (t.operator === '>')  return s + t.minDesired + 1;
+        if (t.operator === '=')  return s + t.minDesired;
         return s;
     }, 0);
     if (sumMin > drawCount)
@@ -762,6 +771,7 @@ function generateGraph() {
             // operator-specific quick sanity
             if (t.operator === '>=' && t.minDesired > t.count) { skip = true; break; }
             if (t.operator === '>'  && t.minDesired >= t.count) { skip = true; break; }
+            if (t.operator === '='  && t.minDesired > t.count) { skip = true; break; }
             if (t.operator === '<'  && t.minDesired < 1) { skip = true; break; }
         }
         if (skip) { xLabels.push(x); yValues.push(null); continue; }
