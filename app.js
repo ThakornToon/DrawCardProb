@@ -1,8 +1,6 @@
-/* ============================================
-   Card Draw Probability Calculator
-   Multivariate Hypergeometric Distribution
-   v2.0 – Bilingual (TH/EN) + Operator Selection
-   ============================================ */
+/* ========================================================================
+   Card Draw Probability Calculator (With Compound Ranges & Performance Fixes)
+   ======================================================================== */
 
 // ==================== I18N ====================
 const I18N = {
@@ -19,7 +17,7 @@ const I18N = {
         calculateBtn: 'คำนวณความน่าจะเป็น',
         nameLabel: 'ชื่อ',
         countLabel: 'จำนวนในกอง',
-        thresholdLabel: 'เกณฑ์',
+        conditionLabel: 'เงื่อนไข (ช่วง)',
         removeTitle: 'ลบชนิดนี้',
         namePlaceholder: 'ชื่อการ์ด',
         noName: '(ไม่มีชื่อ)',
@@ -28,76 +26,40 @@ const I18N = {
         probability: 'ความน่าจะเป็น',
         totalCardsResult: 'การ์ดทั้งหมด',
         drawResult: 'จั่ว',
-        conditionLabel: 'เงื่อนไข',
         oddsLabel: 'อัตราส่วน',
-        impossible: 'ไม่มีทาง',
+        impossible: 'ไม่มีทาง (0%)',
         graphTitle: 'กราฟ',
         xAxisVarLabel: 'ตัวแปรแกน X',
         xAxisPlaceholder: '— เลือกตัวแปร —',
         xMinLabel: 'ค่าเริ่มต้น',
         xMaxLabel: 'ค่าสิ้นสุด',
         generateGraphBtn: 'สร้างกราฟ',
-        chartYLabel: 'ความน่าจะเป็น (%)',
+        defaultNewCardPrefix: 'การ์ด',
+        defaultCardNames: ['การ์ด A', 'การ์ด B', 'การ์ด C', 'การ์ด D'],
+        conditionAnd: 'และ',
+        noCondition: 'ไม่มีเงื่อนไข',
+        invalidDeck: 'ข้อผิดพลาด: ข้อมูลจำนวนการ์ดขัดแย้งกันหรือไม่ถูกต้อง',
+        invalidRange: 'ข้อผิดพลาด: ค่าเริ่มต้นต้องไม่เกินค่าสิ้นสุด',
+        opSymbols: { '>=': '≥', '>': '>', '=': '=', '<=': '≤', '<': '<', 'none': 'ไม่ระบุ' },
         chartXLabelTotalCards: 'จำนวนการ์ดทั้งหมด (N)',
         chartXLabelDrawCount: 'จำนวนการ์ดที่จั่ว (n)',
-        xOptTotalCards: 'จำนวนการ์ดทั้งหมดในกอง (N)',
-        xOptDrawCount: 'จำนวนการ์ดที่จั่ว (n)',
-        xOptCount: (name) => `จำนวน "${name}" ในกอง (K)`,
-        xOptMin: (name) => `เกณฑ์ "${name}" (k)`,
-        chartXLabelCount: (name) => `จำนวน "${name}" ในกอง (K)`,
-        chartXLabelMin: (name) => `เกณฑ์ "${name}" (k)`,
-        chartTooltipTitle: (xLabel, val) => `${xLabel}: ${val}`,
-        chartTooltipProb: (val) => val !== null && val !== undefined
-            ? `ความน่าจะเป็น: ${val.toFixed(4)}%`
-            : 'ไม่สามารถคำนวณ',
-        conditionFormat: (name, opSym, val, count) =>
-            `"${name}" ${opSym} ${val} ใบ (มี ${count} ใบในกอง)`,
-        defaultCardNames: [
-            'การ์ด A', 'การ์ด B', 'การ์ด C', 'การ์ด D',
-            'การ์ด E', 'การ์ด F', 'การ์ด G', 'การ์ด H',
-            'การ์ด I', 'การ์ด J', 'การ์ด K', 'การ์ด L',
-        ],
-        defaultNewCardPrefix: 'การ์ด',
-        opLabels: { '>=': 'อย่างน้อย', '>': 'มากกว่า', '<=': 'อย่างมาก', '<': 'น้อยกว่า', '=': 'เท่ากับ' },
-        opSymbols: { '>=': '≥', '>': '>', '<=': '≤', '<': '<', '=': '=' },
-        footer: 'คำนวณด้วย Multivariate Hypergeometric Distribution \u00b7 สูตร: P = Σ [∏ C(Kᵢ, xᵢ) · C(R, n−Σxᵢ)] / C(N, n)',
-        // Errors
-        errTotalCards: 'จำนวนการ์ดทั้งหมดต้องมากกว่า 0',
-        errDrawCount: 'จำนวนการ์ดที่จั่วต้องมากกว่า 0',
-        errDrawGtTotal: 'จำนวนการ์ดที่จั่วมากกว่าจำนวนการ์ดในกอง',
-        errSumK: (sumK, total) =>
-            `จำนวนรวมของการ์ดแต่ละชนิด (${sumK}) มากกว่าจำนวนการ์ดทั้งหมด (${total})`,
-        errNegCount: (name) => `จำนวนในกองของ "${name}" ต้องไม่ติดลบ`,
-        errNegThreshold: (name) => `เกณฑ์ของ "${name}" ต้องไม่ติดลบ`,
-        errGteThreshold: (name, min, count) =>
-            `ต้องการ "${name}" ≥ ${min} ใบ แต่มีในกองเพียง ${count} ใบ`,
-        errGtThreshold: (name, min, count) =>
-            `ต้องการ "${name}" > ${min} ใบ แต่มีในกองเพียง ${count} ใบ`,
-        errEqThreshold: (name, val, count) =>
-            `ต้องการ "${name}" = ${val} ใบ แต่มีในกองเพียง ${count} ใบ`,
-        errLtThresholdZero: (name) =>
-            `เกณฑ์ "<" ของ "${name}" ต้องมีค่าอย่างน้อย 1`,
-        errSumMin: (sumMin, draw) =>
-            `จำนวนขั้นต่ำรวม (${sumMin}) มากกว่าจำนวนที่จั่ว (${draw})`,
-        errCalc: 'ไม่สามารถคำนวณได้: ข้อมูลไม่ถูกต้อง',
-        alertSelectVar: 'กรุณาเลือกตัวแปรสำหรับแกน X',
-        alertInvalidRange: 'กรุณาระบุช่วงค่าที่ถูกต้อง (เริ่มต้น ≤ สิ้นสุด)',
-        alertRangeTooWide: 'ช่วงค่ากว้างเกินไป (สูงสุด 200 จุด) กรุณาลดช่วงลง',
+        chartYLabel: 'ความน่าจะเป็น (%)',
+        rangeEqualWarning: 'ค่าเริ่มต้นและค่าสิ้นสุดเท่ากัน ( = {val} ) ปรับค่าสิ้นสุดเป็น {newMax} เพื่อให้เห็นแนวโน้ม'
     },
     en: {
         appSubtitle: 'Multivariate Hypergeometric Distribution Calculator',
-        langToggleLabel: 'ไทย',
+        langToggleLabel: 'TH',
         themeToggleTitle: 'Toggle light / dark mode',
         deckSetup: 'Deck Setup',
         totalCardsLabel: 'Total Cards in Deck',
         unit: 'cards',
         drawCountLabel: 'Cards to Draw',
-        cardTypesTitle: 'Desired Card Types',
+        cardTypesTitle: 'Target Card Types',
         addType: 'Add Type',
         calculateBtn: 'Calculate Probability',
         nameLabel: 'Name',
         countLabel: 'In Deck',
-        thresholdLabel: 'Threshold',
+        conditionLabel: 'Conditions (Range)',
         removeTitle: 'Remove this type',
         namePlaceholder: 'Card name',
         noName: '(unnamed)',
@@ -106,79 +68,37 @@ const I18N = {
         probability: 'Probability',
         totalCardsResult: 'Total Cards',
         drawResult: 'Draw',
-        conditionLabel: 'Condition',
         oddsLabel: 'Odds',
-        impossible: 'Impossible',
+        impossible: 'Impossible (0%)',
         graphTitle: 'Graph',
         xAxisVarLabel: 'X-Axis Variable',
         xAxisPlaceholder: '— Select variable —',
         xMinLabel: 'From',
         xMaxLabel: 'To',
         generateGraphBtn: 'Generate Graph',
-        chartYLabel: 'Probability (%)',
-        chartXLabelTotalCards: 'Total Cards (N)',
-        chartXLabelDrawCount: 'Cards Drawn (n)',
-        xOptTotalCards: 'Total Cards in Deck (N)',
-        xOptDrawCount: 'Cards to Draw (n)',
-        xOptCount: (name) => `Count of "${name}" in Deck (K)`,
-        xOptMin: (name) => `Threshold of "${name}" (k)`,
-        chartXLabelCount: (name) => `Count of "${name}" in Deck (K)`,
-        chartXLabelMin: (name) => `Threshold of "${name}" (k)`,
-        chartTooltipTitle: (xLabel, val) => `${xLabel}: ${val}`,
-        chartTooltipProb: (val) => val !== null && val !== undefined
-            ? `Probability: ${val.toFixed(4)}%`
-            : 'Cannot calculate',
-        conditionFormat: (name, opSym, val, count) =>
-            `"${name}" ${opSym} ${val} (${count} in deck)`,
-        defaultCardNames: [
-            'Card A', 'Card B', 'Card C', 'Card D',
-            'Card E', 'Card F', 'Card G', 'Card H',
-            'Card I', 'Card J', 'Card K', 'Card L',
-        ],
         defaultNewCardPrefix: 'Card',
-        opLabels: { '>=': 'At least', '>': 'More than', '<=': 'At most', '<': 'Less than', '=': 'Exactly' },
-        opSymbols: { '>=': '≥', '>': '>', '<=': '≤', '<': '<', '=': '=' },
-        footer: 'Powered by Multivariate Hypergeometric Distribution \u00b7 Formula: P = Σ [∏ C(Kᵢ, xᵢ) · C(R, n−Σxᵢ)] / C(N, n)',
-        // Errors
-        errTotalCards: 'Total cards must be greater than 0',
-        errDrawCount: 'Cards to draw must be greater than 0',
-        errDrawGtTotal: 'Cards to draw cannot exceed total cards in deck',
-        errSumK: (sumK, total) =>
-            `Sum of card type counts (${sumK}) exceeds total cards (${total})`,
-        errNegCount: (name) => `Count of "${name}" must not be negative`,
-        errNegThreshold: (name) => `Threshold of "${name}" must not be negative`,
-        errGteThreshold: (name, min, count) =>
-            `"${name}" requires ≥ ${min} but only ${count} are in deck`,
-        errGtThreshold: (name, min, count) =>
-            `"${name}" requires > ${min} but only ${count} are in deck`,
-        errEqThreshold: (name, val, count) =>
-            `"${name}" requires exactly ${val} but only ${count} are in deck`,
-        errLtThresholdZero: (name) =>
-            `"<" threshold for "${name}" must be at least 1`,
-        errSumMin: (sumMin, draw) =>
-            `Combined minimum (${sumMin}) exceeds cards to draw (${draw})`,
-        errCalc: 'Cannot calculate: invalid configuration',
-        alertSelectVar: 'Please select an X-axis variable',
-        alertInvalidRange: 'Please enter a valid range (From ≤ To)',
-        alertRangeTooWide: 'Range too wide (max 200 points), please narrow it down',
-    },
+        defaultCardNames: ['Card A', 'Card B', 'Card C', 'Card D'],
+        conditionAnd: 'and',
+        noCondition: 'No constraints',
+        invalidDeck: 'Error: Invalid deck configuration or draws.',
+        invalidRange: 'Error: Min value cannot exceed Max value.',
+        opSymbols: { '>=': '≥', '>': '>', '=': '=', '<=': '≤', '<': '<', 'none': 'None' },
+        chartXLabelTotalCards: 'Total Cards in Deck (N)',
+        chartXLabelDrawCount: 'Cards to Draw (n)',
+        chartYLabel: 'Probability (%)',
+        rangeEqualWarning: 'Min and Max values are equal (= {val}). Adjusted Max to {newMax} to show trend.'
+    }
 };
 
-let currentLang = 'th';
+let currentLang = localStorage.getItem('calc_lang') || 'th';
+let cardTypes = [];
+let chartInstance = null;
 
-/** Translate a key; if the value is a function, call it with extra args */
-function tr(key, ...args) {
-    const lang = I18N[currentLang];
-    if (!lang) return key;
-    const val = lang[key];
-    if (val === undefined) return key;
-    if (typeof val === 'function') return val(...args);
-    return val;
-}
+function tr(key) { return I18N[currentLang][key] || key; }
+function escapeHtml(str) { return (str||'').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-// ==================== MATH UTILITIES ====================
-const logFactorialCache = [0, 0]; // logFactorial(0)=0, logFactorial(1)=0
-
+// ==================== Precomputed Math Cache (Fix 6) ====================
+const logFactorialCache = [0, 0];
 function logFactorial(n) {
     if (n < 0) return -Infinity;
     if (n < logFactorialCache.length) return logFactorialCache[n];
@@ -197,402 +117,246 @@ function logCombination(n, r) {
     return logFactorial(n) - logFactorial(r) - logFactorial(n - r);
 }
 
-/**
- * Calculate probability with per-type operator support.
- *
- * @param {number} totalCards  - N: total cards in deck
- * @param {number} drawCount   - n: cards drawn
- * @param {Array}  cardTypes   - [{count: Ki, minDesired: ki, operator: '<'|'<='|'>='|'>'}]
- * @returns {number} probability 0..1
- */
-function calculateProbability(totalCards, drawCount, cardTypes) {
-    const sumK = cardTypes.reduce((s, t) => s + t.count, 0);
-    const otherCards = totalCards - sumK;
-    const logDenom = logCombination(totalCards, drawCount);
-    if (logDenom === -Infinity) return 0;
-    if (otherCards < 0) return NaN;
-    if (drawCount > totalCards) return 0;
-    if (drawCount < 0) return 0;
+// ==================== Logic ====================
+function getRangeForType(type, drawCount) {
+    let tMin = 0;
+    let tMax = Math.min(type.count, drawCount);
+
+    const apply = (op, val) => {
+        if (!op || op === 'none') return;
+        switch (op) {
+            case '>=': tMin = Math.max(tMin, val); break;
+            case '>':  tMin = Math.max(tMin, val + 1); break;
+            case '<=': tMax = Math.min(tMax, val); break;
+            case '<':  tMax = Math.min(tMax, val - 1); break;
+            case '=':  tMin = Math.max(tMin, val); tMax = Math.min(tMax, val); break;
+        }
+    };
+
+    apply(type.cond1.op, type.cond1.val);
+    apply(type.cond2.op, type.cond2.val);
+
+    if (tMin > tMax) return [1, 0];
+    return [tMin, tMax];
+}
+
+function calculateProbability(N, n, types) {
+    let sumK = types.reduce((sum, t) => sum + t.count, 0);
+    let R = N - sumK;
+    if (R < 0 || n > N || n < 0) return 0;
+
+    let totalWaysLn = logCombination(N, n);
+    if (totalWaysLn === -Infinity) return 0;
 
     let totalProb = 0;
 
-    function getRange(type, remainingDraw) {
-        const { count, minDesired, operator = '>=' } = type;
-        const maxPossible = Math.min(count, remainingDraw);
-        switch (operator) {
-            case '>=': return [minDesired,         maxPossible];
-            case '>':  return [minDesired + 1,     maxPossible];
-            case '<=': return [0,                   Math.min(minDesired, maxPossible)];
-            case '<':  return [0,                   Math.min(minDesired - 1, maxPossible)];
-            case '=':  return [minDesired,          minDesired <= maxPossible ? minDesired : -1];
-            default:   return [minDesired,         maxPossible];
-        }
-    }
-
-    function enumerate(typeIdx, remainingDraw, logNumerator) {
-        if (typeIdx === cardTypes.length) {
-            if (remainingDraw < 0 || remainingDraw > otherCards) return;
-            const logTerm = logNumerator + logCombination(otherCards, remainingDraw) - logDenom;
-            totalProb += Math.exp(logTerm);
+    function recurse(index, currentSumX, currentLnWays) {
+        if (index === types.length) {
+            let xRem = n - currentSumX;
+            if (xRem >= 0 && xRem <= R) {
+                let remLn = logCombination(R, xRem);
+                totalProb += Math.exp(currentLnWays + remLn - totalWaysLn);
+            }
             return;
         }
-        const [xiMin, xiMax] = getRange(cardTypes[typeIdx], remainingDraw);
-        if (xiMin < 0 || xiMin > xiMax) return;
-        for (let xi = xiMin; xi <= xiMax; xi++) {
-            enumerate(
-                typeIdx + 1,
-                remainingDraw - xi,
-                logNumerator + logCombination(cardTypes[typeIdx].count, xi)
-            );
+        let t = types[index];
+        for (let x = t.tMin; x <= t.tMax; x++) {
+            if (currentSumX + x > n) break; 
+            let chooseLn = logCombination(t.count, x);
+            if (chooseLn === -Infinity) continue;
+            recurse(index + 1, currentSumX + x, currentLnWays + chooseLn);
         }
     }
 
-    enumerate(0, drawCount, 0);
-    return Math.min(Math.max(totalProb, 0), 1);
+    recurse(0, 0, 0);
+    return Math.min(1, Math.max(0, totalProb));
 }
 
-// ==================== APP STATE ====================
-const TYPE_COLORS = [
-    '#818cf8', '#22d3ee', '#34d399', '#fbbf24',
-    '#fb7185', '#a78bfa', '#f97316', '#14b8a6',
-    '#e879f9', '#60a5fa', '#facc15', '#4ade80',
-];
+// ==================== UI & Rendering ====================
+const TYPE_COLORS = ['#818cf8', '#22d3ee', '#34d399', '#fbbf24', '#fb7185', '#a78bfa'];
 
-let cardTypes = [
-    { id: 1, name: 'การ์ด A', count: 4, minDesired: 1, operator: '>=' },
-];
-let nextId = 2;
-let chartInstance = null;
-
-// ==================== DOM REFERENCES ====================
-const $totalCards    = document.getElementById('totalCards');
-const $drawCount     = document.getElementById('drawCount');
-const $cardTypesList = document.getElementById('cardTypesList');
-const $addCardType   = document.getElementById('addCardType');
-const $calculateBtn  = document.getElementById('calculateBtn');
-const $resultArea    = document.getElementById('resultArea');
-const $xAxisVar      = document.getElementById('xAxisVar');
-const $xMin          = document.getElementById('xMin');
-const $xMax          = document.getElementById('xMax');
-const $generateGraph = document.getElementById('generateGraph');
-const $chartContainer = document.getElementById('chartContainer');
-const $probChart     = document.getElementById('probChart');
-const $themeToggle   = document.getElementById('themeToggle');
-const $langToggle    = document.getElementById('langToggle');
-const $langLabel     = document.getElementById('langToggleLabel');
-
-// ==================== THEME ====================
-function getEffectiveTheme() {
-    const explicit = document.documentElement.getAttribute('data-theme');
-    if (explicit) return explicit;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-function isDark() { return getEffectiveTheme() === 'dark'; }
-
-function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    try { localStorage.setItem('theme', theme); } catch (_) { }
-}
-
-function toggleTheme() {
-    applyTheme(isDark() ? 'light' : 'dark');
-    if (chartInstance && chartInstance._lastRenderData) {
-        const { labels, data, xLabel } = chartInstance._lastRenderData;
-        const variable = chartInstance._lastVariable;
-        renderChart(labels, data, xLabel, variable);
-    }
-}
-
-(function initTheme() {
-    let saved = null;
-    try { saved = localStorage.getItem('theme'); } catch (_) { }
-    if (saved === 'light' || saved === 'dark') applyTheme(saved);
-})();
-
-if ($themeToggle) $themeToggle.addEventListener('click', toggleTheme);
-
-// ==================== LANGUAGE ====================
-function applyLanguage(lang) {
-    currentLang = lang;
-    document.documentElement.setAttribute('lang', lang === 'th' ? 'th' : 'en');
-    try { localStorage.setItem('lang', lang); } catch (_) { }
-
-    // Update static data-i18n elements
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        const val = I18N[lang][key];
-        if (val && typeof val === 'string') el.textContent = val;
-    });
-
-    // Update controls
-    if ($langLabel) $langLabel.textContent = tr('langToggleLabel');
-    if ($themeToggle) $themeToggle.title = tr('themeToggleTitle');
-    document.title = lang === 'th'
-        ? 'เครื่องคำนวณความน่าจะเป็น — Card Draw Probability Calculator'
-        : 'Card Draw Probability Calculator';
-
-    // Re-render dynamic UI
-    renderCardTypes();
-    updateXAxisOptions();
-
-    // Update result placeholder if still showing
-    const $ph = $resultArea.querySelector('.result__placeholder p');
-    if ($ph) $ph.textContent = tr('resultPlaceholder');
-
-    // Re-render chart with updated labels
-    if (chartInstance && chartInstance._lastRenderData) {
-        const { labels, data } = chartInstance._lastRenderData;
-        const variable = chartInstance._lastVariable;
-        const newXLabel = variable ? getXLabelForVariable(variable) : chartInstance._lastRenderData.xLabel;
-        renderChart(labels, data, newXLabel, variable);
-    }
-}
-
-function toggleLanguage() {
-    applyLanguage(currentLang === 'th' ? 'en' : 'th');
-}
-
-(function initLanguage() {
-    let saved = null;
-    try { saved = localStorage.getItem('lang'); } catch (_) { }
-    if (saved === 'th' || saved === 'en') applyLanguage(saved);
-})();
-
-if ($langToggle) $langToggle.addEventListener('click', toggleLanguage);
-
-// ==================== CHART THEME COLORS ====================
-function getChartColors() {
-    const dark = isDark();
-    return {
-        lineColor:         dark ? '#818cf8' : '#6366f1',
-        fillTop:           dark ? 'rgba(129,140,248,0.35)' : 'rgba(99,102,241,0.18)',
-        fillBottom:        dark ? 'rgba(129,140,248,0.02)' : 'rgba(99,102,241,0.01)',
-        pointBorder:       dark ? '#171923' : '#ffffff',
-        pointHoverBg:      dark ? '#a78bfa' : '#818cf8',
-        pointHoverBorder:  dark ? '#ffffff' : '#2d2b3a',
-        tooltipBg:         dark ? 'rgba(23,25,35,0.95)' : 'rgba(255,255,255,0.95)',
-        tooltipTitle:      dark ? '#e2e0f0' : '#2d2b3a',
-        tooltipBody:       dark ? '#8f8da5' : '#6b6880',
-        tooltipBorder:     dark ? 'rgba(139,92,246,0.3)' : 'rgba(99,102,241,0.15)',
-        axisTitle:         dark ? '#8f8da5' : '#6b6880',
-        axisTick:          dark ? '#5a586e' : '#9e9bae',
-        gridColor:         dark ? 'rgba(139,92,246,0.06)' : 'rgba(99,102,241,0.06)',
-        borderColor:       dark ? 'rgba(139,92,246,0.15)' : 'rgba(99,102,241,0.10)',
-    };
-}
-
-// ==================== HELPERS ====================
-function getTypeColor(index) {
-    return TYPE_COLORS[index % TYPE_COLORS.length];
-}
-
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-function getXLabelForVariable(variable) {
-    if (variable === 'totalCards') return tr('chartXLabelTotalCards');
-    if (variable === 'drawCount')  return tr('chartXLabelDrawCount');
-    if (variable.startsWith('count_')) {
-        const id = parseInt(variable.split('_')[1]);
-        const type = cardTypes.find(t => t.id === id);
-        return type ? tr('chartXLabelCount', type.name) : '';
-    }
-    if (variable.startsWith('min_')) {
-        const id = parseInt(variable.split('_')[1]);
-        const type = cardTypes.find(t => t.id === id);
-        return type ? tr('chartXLabelMin', type.name) : '';
-    }
-    return '';
-}
-
-// ==================== RENDER CARD TYPES ====================
 function renderCardTypes() {
-    $cardTypesList.innerHTML = '';
+    const $list = document.getElementById('cardTypesList');
+    $list.innerHTML = '';
+
     cardTypes.forEach((type, idx) => {
-        const color = getTypeColor(idx);
-        const op = type.operator || '>=';
+        const color = TYPE_COLORS[idx % TYPE_COLORS.length];
         const item = document.createElement('div');
         item.className = 'card-type-item';
         item.dataset.id = type.id;
+        
         item.innerHTML = `
             <div class="card-type-item__header">
                 <span class="card-type-item__color" style="background:${color};box-shadow:0 0 8px ${color}55"></span>
-                <span class="card-type-item__title">${escapeHtml(type.name)}</span>
-                ${cardTypes.length > 1
-                    ? `<button type="button" class="card-type-item__remove" data-id="${type.id}"
-                         title="${tr('removeTitle')}">&times;</button>`
-                    : ''}
+                <span class="card-type-item__title">${escapeHtml(type.name || tr('noName'))}</span>
+                <button type="button" class="card-type-item__remove" data-id="${type.id}" title="${tr('removeTitle')}">&times;</button>
             </div>
             <div class="card-type-item__fields">
                 <div class="field">
                     <label class="field__label">${tr('nameLabel')}</label>
-                    <input type="text" class="field__input ct-name" data-id="${type.id}"
-                        value="${escapeHtml(type.name)}" placeholder="${tr('namePlaceholder')}">
+                    <input type="text" class="field__input ct-name" data-id="${type.id}" value="${escapeHtml(type.name)}" placeholder="${tr('namePlaceholder')}">
                 </div>
                 <div class="field">
                     <label class="field__label">${tr('countLabel')}</label>
-                    <input type="number" class="field__input ct-count" data-id="${type.id}"
-                        value="${type.count}" min="0" max="1000">
+                    <input type="number" class="field__input ct-count" data-id="${type.id}" value="${type.count}" min="0">
                 </div>
                 <div class="field">
-                    <label class="field__label">${tr('thresholdLabel')}</label>
+                    <label class="field__label">${tr('conditionLabel')}</label>
                     <div class="field__op-wrap">
-                        <div class="operator-group" data-id="${type.id}">
-                            <button type="button" class="op-btn${op === '<'  ? ' op-btn--active' : ''}" data-op="<">&lt;</button>
-                            <button type="button" class="op-btn${op === '<=' ? ' op-btn--active' : ''}" data-op="<=">&le;</button>
-                            <button type="button" class="op-btn${op === '='  ? ' op-btn--active' : ''}" data-op="=">=</button>
-                            <button type="button" class="op-btn${op === '>=' ? ' op-btn--active' : ''}" data-op=">=">&ge;</button>
-                            <button type="button" class="op-btn${op === '>'  ? ' op-btn--active' : ''}" data-op=">">&gt;</button>
+                        <div style="display:flex; gap:0.25rem;">
+                            <select class="field__select ct-op" data-id="${type.id}" data-cond="cond1" style="flex:1; padding-right:1rem;">
+                                <option value=">=" ${type.cond1.op === '>=' ? 'selected' : ''}>&ge;</option>
+                                <option value=">" ${type.cond1.op === '>' ? 'selected' : ''}>&gt;</option>
+                                <option value="=" ${type.cond1.op === '=' ? 'selected' : ''}>=</option>
+                                <option value="<=" ${type.cond1.op === '<=' ? 'selected' : ''}>&le;</option>
+                                <option value="<" ${type.cond1.op === '<' ? 'selected' : ''}>&lt;</option>
+                            </select>
+                            <input type="number" class="field__input ct-val" data-id="${type.id}" data-cond="cond1" value="${type.cond1.val}" min="0" style="flex:1;">
                         </div>
-                        <input type="number" class="field__input ct-min" data-id="${type.id}"
-                            value="${type.minDesired}" min="0" max="1000">
+                        <div style="display:flex; gap:0.25rem; margin-top:0.25rem;">
+                            <select class="field__select ct-op" data-id="${type.id}" data-cond="cond2" style="flex:1; padding-right:1rem;">
+                                <option value="none" ${type.cond2.op === 'none' ? 'selected' : ''}>-- ${tr('opSymbols').none} --</option>
+                                <option value=">=" ${type.cond2.op === '>=' ? 'selected' : ''}>&ge;</option>
+                                <option value=">" ${type.cond2.op === '>' ? 'selected' : ''}>&gt;</option>
+                                <option value="=" ${type.cond2.op === '=' ? 'selected' : ''}>=</option>
+                                <option value="<=" ${type.cond2.op === '<=' ? 'selected' : ''}>&le;</option>
+                                <option value="<" ${type.cond2.op === '<' ? 'selected' : ''}>&lt;</option>
+                            </select>
+                            <input type="number" class="field__input ct-val" data-id="${type.id}" data-cond="cond2" value="${type.cond2.val}" min="0" style="flex:1; ${type.cond2.op === 'none' ? 'opacity:0.4;' : ''}" ${type.cond2.op === 'none' ? 'disabled' : ''}>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
-        $cardTypesList.appendChild(item);
+        $list.appendChild(item);
     });
 
-    // Remove buttons
-    $cardTypesList.querySelectorAll('.card-type-item__remove').forEach(btn => {
-        btn.addEventListener('click', () => removeCardType(parseInt(btn.dataset.id)));
-    });
-    // Name input
-    $cardTypesList.querySelectorAll('.ct-name').forEach(input => {
-        input.addEventListener('input', (e) =>
-            updateCardType(parseInt(e.target.dataset.id), 'name', e.target.value));
-    });
-    // Count input
-    $cardTypesList.querySelectorAll('.ct-count').forEach(input => {
-        input.addEventListener('input', (e) =>
-            updateCardType(parseInt(e.target.dataset.id), 'count', parseInt(e.target.value) || 0));
-    });
-    // Threshold input
-    $cardTypesList.querySelectorAll('.ct-min').forEach(input => {
-        input.addEventListener('input', (e) =>
-            updateCardType(parseInt(e.target.dataset.id), 'minDesired', parseInt(e.target.value) || 0));
-    });
-    // Operator buttons
-    $cardTypesList.querySelectorAll('.operator-group').forEach(group => {
-        const id = parseInt(group.dataset.id);
-        group.querySelectorAll('.op-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const newOp = btn.dataset.op;
-                updateCardType(id, 'operator', newOp);
-                // Update active state immediately (no full re-render needed)
-                group.querySelectorAll('.op-btn').forEach(b => {
-                    b.classList.toggle('op-btn--active', b.dataset.op === newOp);
-                });
-            });
-        });
-    });
-
+    attachCardEventListeners();
     updateXAxisOptions();
 }
 
-function addCardType() {
-    const names = I18N[currentLang].defaultCardNames;
-    const usedNames = new Set(cardTypes.map(t => t.name));
-    let newName = `${tr('defaultNewCardPrefix')} ${nextId}`;
-    for (const n of names) {
-        if (!usedNames.has(n)) { newName = n; break; }
-    }
-    cardTypes.push({ id: nextId++, name: newName, count: 3, minDesired: 1, operator: '>=' });
-    renderCardTypes();
-}
+function attachCardEventListeners() {
+    const $list = document.getElementById('cardTypesList');
 
-function removeCardType(id) {
-    cardTypes = cardTypes.filter(t => t.id !== id);
-    renderCardTypes();
-}
+    $list.querySelectorAll('.card-type-item__remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            cardTypes = cardTypes.filter(t => t.id !== id);
+            renderCardTypes();
+        });
+    });
 
-function updateCardType(id, field, value) {
-    const type = cardTypes.find(t => t.id === id);
-    if (type) {
-        type[field] = value;
-        if (field === 'name') {
-            const item = $cardTypesList.querySelector(`[data-id="${id}"]`);
-            if (item) {
-                item.querySelector('.card-type-item__title').textContent = value || tr('noName');
+    $list.querySelectorAll('.ct-name').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            const type = cardTypes.find(t => t.id === id);
+            if (type) {
+                type.name = e.target.value;
+                const headerTitle = e.currentTarget.closest('.card-type-item').querySelector('.card-type-item__title');
+                if (headerTitle) headerTitle.textContent = e.target.value || tr('noName');
+                updateXAxisOptions();
             }
-        }
-        updateXAxisOptions();
-    }
+        });
+    });
+
+    $list.querySelectorAll('.ct-count').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            const type = cardTypes.find(t => t.id === id);
+            if (type) type.count = parseInt(e.target.value) || 0;
+        });
+    });
+
+    $list.querySelectorAll('.ct-op').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            const condKey = e.currentTarget.dataset.cond;
+            const type = cardTypes.find(t => t.id === id);
+            if (type) {
+                type[condKey].op = e.target.value;
+                const parentDiv = e.target.parentElement;
+                const valInput = parentDiv.querySelector('.ct-val');
+                if (valInput && condKey === 'cond2') {
+                    if (e.target.value === 'none') {
+                        valInput.disabled = true;
+                        valInput.style.opacity = '0.4';
+                    } else {
+                        valInput.disabled = false;
+                        valInput.style.opacity = '1';
+                    }
+                }
+            }
+        });
+    });
+
+    $list.querySelectorAll('.ct-val').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            const condKey = e.currentTarget.dataset.cond;
+            const type = cardTypes.find(t => t.id === id);
+            if (type) type[condKey].val = parseInt(e.target.value) || 0;
+        });
+    });
 }
 
-// ==================== VALIDATION ====================
-function validate() {
-    const totalCards = parseInt($totalCards.value);
-    const drawCount  = parseInt($drawCount.value);
+function updateXAxisOptions() {
+    const $select = document.getElementById('xAxisVar');
+    const currentVal = $select.value;
 
-    if (isNaN(totalCards) || totalCards < 1)
-        return { valid: false, error: tr('errTotalCards') };
-    if (isNaN(drawCount) || drawCount < 1)
-        return { valid: false, error: tr('errDrawCount') };
-    if (drawCount > totalCards)
-        return { valid: false, error: tr('errDrawGtTotal') };
+    $select.innerHTML = `
+        <option value="">${tr('xAxisPlaceholder')}</option>
+        <option value="totalCards">${tr('chartXLabelTotalCards')}</option>
+        <option value="drawCount">${tr('chartXLabelDrawCount')}</option>
+    `;
 
-    const sumK = cardTypes.reduce((s, t) => s + t.count, 0);
-    if (sumK > totalCards)
-        return { valid: false, error: tr('errSumK', sumK, totalCards) };
+    cardTypes.forEach(t => {
+        const name = t.name.trim() || tr('noName');
+        const opt = document.createElement('option');
+        opt.value = `cardType_${t.id}`;
+        opt.textContent = `${name} (Count in Deck)`;
+        $select.appendChild(opt);
+    });
 
-    for (const type of cardTypes) {
-        if (type.count < 0)
-            return { valid: false, error: tr('errNegCount', type.name) };
-        if (type.minDesired < 0)
-            return { valid: false, error: tr('errNegThreshold', type.name) };
-
-        if (type.operator === '>=' && type.minDesired > type.count)
-            return { valid: false, error: tr('errGteThreshold', type.name, type.minDesired, type.count) };
-        if (type.operator === '>' && type.minDesired >= type.count)
-            return { valid: false, error: tr('errGtThreshold', type.name, type.minDesired, type.count) };
-        if (type.operator === '=' && type.minDesired > type.count)
-            return { valid: false, error: tr('errEqThreshold', type.name, type.minDesired, type.count) };
-        if (type.operator === '<' && type.minDesired < 1)
-            return { valid: false, error: tr('errLtThresholdZero', type.name) };
-    }
-
-    // Effective minimum draw requirement (only >=, >, and = impose a minimum)
-    const sumMin = cardTypes.reduce((s, t) => {
-        if (t.operator === '>=') return s + t.minDesired;
-        if (t.operator === '>')  return s + t.minDesired + 1;
-        if (t.operator === '=')  return s + t.minDesired;
-        return s;
-    }, 0);
-    if (sumMin > drawCount)
-        return { valid: false, error: tr('errSumMin', sumMin, drawCount) };
-
-    return { valid: true, totalCards, drawCount };
+    $select.value = currentVal;
 }
 
-// ==================== DISPLAY RESULT ====================
-function displayResult(probability, totalCards, drawCount) {
-    const percent = probability * 100;
-    const percentStr = percent < 0.01 && percent > 0
-        ? '< 0.01%'
-        : percent > 99.99 && percent < 100
-            ? '> 99.99%'
-            : percent.toFixed(2) + '%';
-    const oddsStr = probability > 0 && probability < 1
-        ? `1 : ${(1 / probability).toFixed(2)}`
-        : probability >= 1
-            ? '1 : 1'
-            : tr('impossible');
+// ==================== Display Results ====================
+function runCalculation() {
+    const N = parseInt(document.getElementById('totalCards').value) || 0;
+    const n = parseInt(document.getElementById('drawCount').value) || 0;
+    const sumK = cardTypes.reduce((sum, t) => sum + t.count, 0);
 
-    const opSymbols = I18N[currentLang].opSymbols;
+    if (N <= 0 || n < 0 || n > N || sumK > N) {
+        displayError(tr('invalidDeck'));
+        return;
+    }
+
+    const typesForCalc = cardTypes.map(t => {
+        let [tMin, tMax] = getRangeForType(t, n);
+        return { count: t.count, tMin, tMax };
+    });
+
+    const prob = calculateProbability(N, n, typesForCalc);
+    
+    const percent = prob * 100;
+    const percentStr = percent < 0.01 && percent > 0 ? '< 0.01%' : percent > 99.99 && percent < 100 ? '> 99.99%' : percent.toFixed(2) + '%';
+    
+    let oddsStr = prob <= 0 ? tr('impossible') : prob >= 1 ? '1 : 1' : `1 : ${( (1 - prob) / prob ).toFixed(2)}`;
+
+    const symbols = tr('opSymbols');
     const typeSummary = cardTypes.map(t => {
-        const opSym = opSymbols[t.operator] || '≥';
-        return tr('conditionFormat', t.name, opSym, t.minDesired, t.count);
-    }).join(', ');
+        const getCond = (c) => c.op === 'none' ? '' : `${symbols[c.op]} ${c.val}`;
+        let condText = getCond(t.cond1);
+        if (getCond(t.cond2)) condText += ` ${tr('conditionAnd')} ${getCond(t.cond2)}`;
+        if (!condText) condText = tr('noCondition');
+        return `"${escapeHtml(t.name)}" ${condText} (${t.count} ${tr('unit')})`;
+    }).join('<br>');
 
-    $resultArea.innerHTML = `
+    document.getElementById('resultArea').innerHTML = `
         <div class="result__content">
             <div class="result__value-wrap">
                 <div class="result__percent">${percentStr}</div>
-                <div class="result__fraction">${tr('probability')}: ${probability.toFixed(8)}</div>
+                <div class="result__fraction">${tr('probability')}: ${prob.toFixed(8)}</div>
             </div>
             <div class="result__bar-container">
                 <div class="result__bar" style="width: 0%"></div>
@@ -600,15 +364,15 @@ function displayResult(probability, totalCards, drawCount) {
             <div class="result__details">
                 <div class="result__detail-row">
                     <span class="result__detail-label">${tr('totalCardsResult')}</span>
-                    <span class="result__detail-value">${totalCards} ${tr('unit')}</span>
+                    <span class="result__detail-value">${N} ${tr('unit')}</span>
                 </div>
                 <div class="result__detail-row">
                     <span class="result__detail-label">${tr('drawResult')}</span>
-                    <span class="result__detail-value">${drawCount} ${tr('unit')}</span>
+                    <span class="result__detail-value">${n} ${tr('unit')}</span>
                 </div>
-                <div class="result__detail-row">
+                <div class="result__detail-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
                     <span class="result__detail-label">${tr('conditionLabel')}</span>
-                    <span class="result__detail-value">${escapeHtml(typeSummary)}</span>
+                    <span class="result__detail-value" style="font-weight:normal; font-size:0.8rem;">${typeSummary}</span>
                 </div>
                 <div class="result__detail-row">
                     <span class="result__detail-label">${tr('oddsLabel')}</span>
@@ -617,16 +381,16 @@ function displayResult(probability, totalCards, drawCount) {
             </div>
         </div>
     `;
+
+    // FIX 1: Use requestAnimationFrame instead of setTimeout for reliable bar animation
     requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            const bar = $resultArea.querySelector('.result__bar');
-            if (bar) bar.style.width = Math.min(percent, 100) + '%';
-        });
+        const bar = document.querySelector('.result__bar');
+        if (bar) bar.style.width = Math.min(percent, 100) + '%';
     });
 }
 
 function displayError(msg) {
-    $resultArea.innerHTML = `
+    document.getElementById('resultArea').innerHTML = `
         <div class="result__error">
             <span class="result__error-icon">⚠️</span>
             <p class="result__error-msg">${escapeHtml(msg)}</p>
@@ -634,273 +398,159 @@ function displayError(msg) {
     `;
 }
 
-// ==================== CALCULATE ====================
-function runCalculation() {
-    const validation = validate();
-    if (!validation.valid) {
-        displayError(validation.error);
-        return;
-    }
-    const { totalCards, drawCount } = validation;
-    const types = cardTypes.map(t => ({
-        count: t.count,
-        minDesired: t.minDesired,
-        operator: t.operator || '>=',
-    }));
-    const prob = calculateProbability(totalCards, drawCount, types);
-    if (isNaN(prob)) {
-        displayError(tr('errCalc'));
-        return;
-    }
-    displayResult(prob, totalCards, drawCount);
-}
-
-// ==================== GRAPH (X-AXIS) OPTIONS ====================
-function updateXAxisOptions() {
-    const currentVal = $xAxisVar.value;
-    $xAxisVar.innerHTML = `<option value="">${tr('xAxisPlaceholder')}</option>`;
-    const options = [
-        { value: 'totalCards', label: tr('xOptTotalCards') },
-        { value: 'drawCount',  label: tr('xOptDrawCount') },
-    ];
-    cardTypes.forEach(type => {
-        options.push({ value: `count_${type.id}`, label: tr('xOptCount', type.name) });
-        options.push({ value: `min_${type.id}`,   label: tr('xOptMin', type.name) });
-    });
-    options.forEach(opt => {
-        const el = document.createElement('option');
-        el.value = opt.value;
-        el.textContent = opt.label;
-        $xAxisVar.appendChild(el);
-    });
-    if ([...($xAxisVar.options)].some(o => o.value === currentVal)) {
-        $xAxisVar.value = currentVal;
-    }
-}
-
-// Auto-fill range when variable is selected
-$xAxisVar.addEventListener('change', () => {
-    const v = $xAxisVar.value;
-    if (!v) return;
-    if (v === 'totalCards') {
-        const sumK = cardTypes.reduce((s, t) => s + t.count, 0);
-        $xMin.value = Math.max(sumK, 1);
-        $xMax.value = Math.max(sumK + 30, parseInt($totalCards.value) + 10);
-    } else if (v === 'drawCount') {
-        $xMin.value = 1;
-        $xMax.value = parseInt($totalCards.value) || 40;
-    } else if (v.startsWith('count_')) {
-        $xMin.value = 0;
-        const id = parseInt(v.split('_')[1]);
-        const type = cardTypes.find(t => t.id === id);
-        $xMax.value = type ? Math.max(type.count + 10, 15) : 15;
-    } else if (v.startsWith('min_')) {
-        $xMin.value = 0;
-        const id = parseInt(v.split('_')[1]);
-        const type = cardTypes.find(t => t.id === id);
-        $xMax.value = type ? type.count : 10;
-    }
-});
-
-// ==================== GENERATE GRAPH ====================
+// ==================== Chart ====================
 function generateGraph() {
-    const variable = $xAxisVar.value;
-    if (!variable) {
-        alert(tr('alertSelectVar'));
-        return;
-    }
-    const xMin = parseInt($xMin.value);
-    const xMax = parseInt($xMax.value);
-    if (isNaN(xMin) || isNaN(xMax) || xMin > xMax) {
-        alert(tr('alertInvalidRange'));
-        return;
-    }
-    if (xMax - xMin > 200) {
-        alert(tr('alertRangeTooWide'));
-        return;
-    }
+    const variable = document.getElementById('xAxisVar').value;
+    if (!variable) return alert(tr('xAxisPlaceholder'));
 
-    const baseTotalCards = parseInt($totalCards.value) || 40;
-    const baseDrawCount  = parseInt($drawCount.value) || 5;
-    const baseTypes      = cardTypes.map(t => ({ ...t }));
+    let xMin = parseInt(document.getElementById('xMin').value) || 0;
+    let xMax = parseInt(document.getElementById('xMax').value) || 0;
+    
+    // FIX 2: Handle case when min equals max
+    if (xMin === xMax) {
+        const newMax = xMin + 1;
+        const warningMsg = tr('rangeEqualWarning')
+            .replace('{val}', xMin)
+            .replace('{newMax}', newMax);
+        alert(warningMsg);
+        xMax = newMax;
+        document.getElementById('xMax').value = newMax;
+    }
+    
+    if (xMin > xMax) return alert(tr('invalidRange'));
 
-    const xLabels = [];
-    const yValues = [];
+    const baseN = parseInt(document.getElementById('totalCards').value) || 0;
+    const basen = parseInt(document.getElementById('drawCount').value) || 0;
+
+    let labels = [];
+    let dataPoints = [];
     let xLabel = '';
 
     for (let x = xMin; x <= xMax; x++) {
-        let N = baseTotalCards;
-        let n = baseDrawCount;
-        let types = baseTypes.map(t => ({
-            count: t.count,
-            minDesired: t.minDesired,
-            operator: t.operator || '>=',
-        }));
+        labels.push(x);
+        let currentN = baseN;
+        let currentn = basen;
+        let cTypes = JSON.parse(JSON.stringify(cardTypes));
 
         if (variable === 'totalCards') {
-            N = x;
+            currentN = x;
             xLabel = tr('chartXLabelTotalCards');
         } else if (variable === 'drawCount') {
-            n = x;
+            currentn = x;
             xLabel = tr('chartXLabelDrawCount');
-        } else if (variable.startsWith('count_')) {
+        } else if (variable.startsWith('cardType_')) {
             const id = parseInt(variable.split('_')[1]);
-            const typeIdx = baseTypes.findIndex(t => t.id === id);
-            if (typeIdx >= 0) {
-                types[typeIdx].count = x;
-                xLabel = tr('chartXLabelCount', baseTypes[typeIdx].name);
-            }
-        } else if (variable.startsWith('min_')) {
-            const id = parseInt(variable.split('_')[1]);
-            const typeIdx = baseTypes.findIndex(t => t.id === id);
-            if (typeIdx >= 0) {
-                types[typeIdx].minDesired = x;
-                xLabel = tr('chartXLabelMin', baseTypes[typeIdx].name);
+            const tgt = cTypes.find(t => t.id === id);
+            if (tgt) {
+                tgt.count = x;
+                xLabel = tgt.name;
             }
         }
 
-        // Skip clearly invalid configs
-        const sumK = types.reduce((s, t) => s + t.count, 0);
-        if (N < 1 || n < 1 || n > N || sumK > N) {
-            xLabels.push(x); yValues.push(null); continue;
+        let sumK = cTypes.reduce((sum, t) => sum + t.count, 0);
+        if (currentN <= 0 || currentn < 0 || currentn > currentN || sumK > currentN) {
+            dataPoints.push(null);
+            continue;
         }
-        let skip = false;
-        for (const t of types) {
-            if (t.count < 0) { skip = true; break; }
-            if (t.minDesired < 0) { skip = true; break; }
-            // operator-specific quick sanity
-            if (t.operator === '>=' && t.minDesired > t.count) { skip = true; break; }
-            if (t.operator === '>'  && t.minDesired >= t.count) { skip = true; break; }
-            if (t.operator === '='  && t.minDesired > t.count) { skip = true; break; }
-            if (t.operator === '<'  && t.minDesired < 1) { skip = true; break; }
-        }
-        if (skip) { xLabels.push(x); yValues.push(null); continue; }
 
-        const prob = calculateProbability(N, n, types);
-        xLabels.push(x);
-        yValues.push(isNaN(prob) ? null : prob * 100);
+        const typesForCalc = cTypes.map(t => {
+            let [tMin, tMax] = getRangeForType(t, currentn);
+            return { count: t.count, tMin, tMax };
+        });
+
+        const p = calculateProbability(currentN, currentn, typesForCalc);
+        dataPoints.push(p * 100);
     }
 
-    renderChart(xLabels, yValues, xLabel, variable);
-}
-
-// ==================== CHART RENDERING ====================
-function renderChart(labels, data, xLabel, variable = null) {
-    $chartContainer.style.display = 'block';
+    document.getElementById('chartContainer').style.display = 'block';
     if (chartInstance) chartInstance.destroy();
 
-    const ctx = $probChart.getContext('2d');
-    const c = getChartColors();
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const cLine = isDark ? '#818cf8' : '#6366f1';
+    const cGrid = isDark ? 'rgba(139,92,246,0.06)' : 'rgba(99,102,241,0.06)';
+    const cText = isDark ? '#8f8da5' : '#6b6880';
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, c.fillTop);
-    gradient.addColorStop(1, c.fillBottom);
-
-    // Capture current language for tooltip closures
-    const snapLang = currentLang;
-    const yLabel = tr('chartYLabel');
-
+    const ctx = document.getElementById('probChart').getContext('2d');
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels,
+            labels: labels,
             datasets: [{
-                label: yLabel,
-                data,
-                borderColor: c.lineColor,
-                backgroundColor: gradient,
+                label: tr('chartYLabel'),
+                data: dataPoints,
+                borderColor: cLine,
+                backgroundColor: isDark ? 'rgba(129,140,248,0.1)' : 'rgba(99,102,241,0.1)',
                 borderWidth: 2.5,
-                pointBackgroundColor: c.lineColor,
-                pointBorderColor: c.pointBorder,
-                pointBorderWidth: 2,
-                pointRadius: labels.length > 50 ? 0 : 3,
-                pointHoverRadius: 6,
-                pointHoverBackgroundColor: c.pointHoverBg,
-                pointHoverBorderColor: c.pointHoverBorder,
                 fill: true,
-                tension: 0.3,
                 spanGaps: true,
-            }],
+                tension: 0.3
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'nearest', axis: 'x', intersect: false },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: c.tooltipBg,
-                    titleColor: c.tooltipTitle,
-                    bodyColor: c.tooltipBody,
-                    borderColor: c.tooltipBorder,
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    padding: 12,
-                    titleFont: { family: 'Inter', weight: '600' },
-                    bodyFont: { family: 'Inter' },
-                    callbacks: {
-                        title: (items) => tr('chartTooltipTitle', xLabel, items[0].label),
-                        label: (item) => tr('chartTooltipProb', item.parsed.y),
-                    },
-                },
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: xLabel,
-                        color: c.axisTitle,
-                        font: { family: 'Inter', size: 12, weight: '500' },
-                    },
-                    ticks: { color: c.axisTick, font: { family: 'Inter', size: 11 }, maxTicksLimit: 20 },
-                    grid: { color: c.gridColor },
-                    border: { color: c.borderColor },
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: yLabel,
-                        color: c.axisTitle,
-                        font: { family: 'Inter', size: 12, weight: '500' },
-                    },
-                    min: 0,
-                    max: 100,
-                    ticks: {
-                        color: c.axisTick,
-                        font: { family: 'Inter', size: 11 },
-                        callback: (val) => val + '%',
-                    },
-                    grid: { color: c.gridColor },
-                    border: { color: c.borderColor },
-                },
-            },
-        },
+                x: { title: { display: true, text: xLabel, color: cText }, grid: { color: cGrid }, ticks: { color: cText } },
+                y: { title: { display: true, text: tr('chartYLabel'), color: cText }, min: 0, max: 100, grid: { color: cGrid }, ticks: { color: cText, callback: v => v + '%' } }
+            }
+        }
+    });
+}
+
+// ==================== Initialize System ====================
+function updateUILang() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        if (I18N[currentLang][el.dataset.i18n]) el.textContent = I18N[currentLang][el.dataset.i18n];
+    });
+    document.getElementById('langToggleLabel').textContent = currentLang === 'th' ? 'EN' : 'TH';
+    renderCardTypes();
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('calc_theme', theme);
+    if (chartInstance) generateGraph();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const getNextId = () => {
+        return cardTypes.length === 0 ? 1 : Math.max(...cardTypes.map(c => c.id)) + 1;
+    };
+
+    cardTypes = [{
+        id: getNextId(),
+        name: currentLang === 'th' ? 'การ์ด A' : 'Card A',
+        count: 4,
+        cond1: { op: '>=', val: 2 },
+        cond2: { op: '<', val: 4 }
+    }];
+
+    applyTheme(localStorage.getItem('calc_theme') || 'dark');
+    updateUILang();
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
     });
 
-    chartInstance._lastRenderData = { labels, data, xLabel };
-    chartInstance._lastVariable   = variable;
-}
+    document.getElementById('langToggle').addEventListener('click', () => {
+        currentLang = currentLang === 'th' ? 'en' : 'th';
+        localStorage.setItem('calc_lang', currentLang);
+        updateUILang();
+    });
 
-// ==================== EVENT LISTENERS ====================
-$addCardType.addEventListener('click', addCardType);
-$calculateBtn.addEventListener('click', runCalculation);
-$generateGraph.addEventListener('click', generateGraph);
+    document.getElementById('addCardType').addEventListener('click', () => {
+        cardTypes.push({
+            id: getNextId(),
+            name: `${tr('defaultNewCardPrefix')} ${getNextId()}`,
+            count: 3,
+            cond1: { op: '>=', val: 1 },
+            cond2: { op: 'none', val: 0 }
+        });
+        renderCardTypes();
+    });
 
-// Allow Enter to trigger calculation
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        const tag = document.activeElement?.tagName;
-        if (tag === 'INPUT' || tag === 'SELECT') {
-            e.preventDefault();
-            runCalculation();
-        }
-    }
+    document.getElementById('calculateBtn').addEventListener('click', runCalculation);
+    document.getElementById('generateGraph').addEventListener('click', generateGraph);
 });
-
-// ==================== INITIALIZE ====================
-document.addEventListener('DOMContentLoaded', () => {
-    renderCardTypes();
-});
-if (document.readyState !== 'loading') {
-    renderCardTypes();
-}

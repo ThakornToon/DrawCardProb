@@ -39,8 +39,8 @@
                 </button>
             </div>
         </header>
+
         <main class="main">
-            <!-- ===== INPUT PANEL ===== -->
             <section class="panel panel--input">
                 <div class="card card--deck">
                     <div class="card__header">
@@ -64,6 +64,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="card card--types">
                     <div class="card__header">
                         <span class="card__icon">🎴</span>
@@ -74,15 +75,14 @@
                     </div>
                     <div class="card__body">
                         <div id="cardTypesList" class="card-types-list">
-                            <!-- Dynamically populated -->
-                        </div>
+                            </div>
                     </div>
                 </div>
                 <button type="button" id="calculateBtn" class="btn btn--primary btn--lg btn--full">
                     <span class="btn__icon">⚡</span> <span data-i18n="calculateBtn">คำนวณความน่าจะเป็น</span>
                 </button>
             </section>
-            <!-- ===== OUTPUT PANEL ===== -->
+
             <section class="panel panel--output">
                 <div class="card card--result">
                     <div class="card__header">
@@ -98,6 +98,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="card card--graph">
                     <div class="card__header">
                         <span class="card__icon">📈</span>
@@ -108,17 +109,17 @@
                             <div class="field">
                                 <label class="field__label" for="xAxisVar" data-i18n="xAxisVarLabel">ตัวแปรแกน X</label>
                                 <select id="xAxisVar" class="field__select">
-                                    <option value="">— เลือกตัวแปร —</option>
-                                </select>
+                                    <option value="" data-i18n="xAxisPlaceholder">— เลือกตัวแปร —</option>
+                                    </select>
                             </div>
                             <div class="graph-controls__range">
                                 <div class="field">
                                     <label class="field__label" for="xMin" data-i18n="xMinLabel">ค่าเริ่มต้น</label>
-                                    <input type="number" id="xMin" class="field__input" min="0">
+                                    <input type="number" id="xMin" class="field__input" min="0" value="1">
                                 </div>
                                 <div class="field">
                                     <label class="field__label" for="xMax" data-i18n="xMaxLabel">ค่าสิ้นสุด</label>
-                                    <input type="number" id="xMax" class="field__input" min="0">
+                                    <input type="number" id="xMax" class="field__input" min="0" value="15">
                                 </div>
                             </div>
                             <button type="button" id="generateGraph" class="btn btn--secondary btn--full">
@@ -138,5 +139,4 @@
     </div>
     <script src="app.js"></script>
 </body>
-
 </html>
